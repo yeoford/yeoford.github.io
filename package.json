@@ -32,10 +32,11 @@
     "@tailwindcss/vite": "^4.3.3",
     "astro": "7.1.4",
     "github-slugger": "^2.0.0",
-    "pdfjs-dist": "^5.7.284",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8",
-    "react-pdf": "^9.2.1",
+    "maplibre-gl": "6.0.0",
+    "pdfjs-dist": "5.4.296",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "react-pdf": "10.4.1",
     "sharp": "0.35.3"
   },
   "devDependencies": {

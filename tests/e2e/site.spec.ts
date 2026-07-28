@@ -64,6 +64,12 @@ test('map loads and retains a usable external-data fallback', async ({
   page
 }) => {
   const errors = applicationErrors(page);
+  const unpkgRequests: string[] = [];
+  page.on('request', request => {
+    if (request.url().includes('unpkg.com')) {
+      unpkgRequests.push(request.url());
+    }
+  });
 
   await page.route(
     'https://tiles.openfreemap.org/styles/liberty',
@@ -77,7 +83,13 @@ test('map loads and retains a usable external-data fallback', async ({
   await page.goto('/the-village');
   await expect(page.locator('.maplibregl-canvas')).toBeVisible();
   await expectNoHorizontalOverflow(page);
+  expect(unpkgRequests).toEqual([]);
   expect(errors).toEqual([]);
+
+  await page.getByRole('link', { name: 'Contact' }).click();
+  await expect(page).toHaveURL(/\/contact\/?$/);
+  await page.getByRole('link', { name: 'The Village' }).click();
+  await expect(page.locator('.maplibregl-canvas')).toBeVisible();
 
   await page.unroute('https://tiles.openfreemap.org/styles/liberty');
   await page.route('https://tiles.openfreemap.org/styles/liberty', route =>
@@ -94,6 +106,18 @@ test('latest and archive Issue PDFs expose working controls', async ({
   page
 }) => {
   const errors = applicationErrors(page);
+  const workerResponses: { ok: boolean; url: string }[] = [];
+  const unpkgRequests: string[] = [];
+  page.on('request', request => {
+    if (request.url().includes('unpkg.com')) {
+      unpkgRequests.push(request.url());
+    }
+  });
+  page.on('response', response => {
+    if (response.url().includes('pdf.worker')) {
+      workerResponses.push({ ok: response.ok(), url: response.url() });
+    }
+  });
 
   for (const route of ['/village-voice', '/newsletter/newsletter-2025-0-405']) {
     await page.goto(route);
@@ -107,5 +131,13 @@ test('latest and archive Issue PDFs expose working controls', async ({
     await expectNoHorizontalOverflow(page);
   }
 
+  expect(unpkgRequests).toEqual([]);
+  expect(workerResponses.length).toBeGreaterThan(0);
+  expect(workerResponses.every(response => response.ok)).toBe(true);
+  expect(
+    workerResponses.every(response =>
+      response.url.startsWith(page.url().split('/newsletter')[0])
+    )
+  ).toBe(true);
   expect(errors).toEqual([]);
 });
