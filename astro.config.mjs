@@ -11,15 +11,14 @@ const __dirname = import.meta.dirname;
 
 // https://astro.build/config
 export default defineConfig({
+  compressHTML: true,
+
   integrations: [react(), sitemap()],
 
   site: 'https://yeoford.org',
 
   vite: {
-    plugins: [
-      // @ts-expect-error Bun may install identical Vite types at two paths.
-      tailwindcss()
-    ],
+    plugins: [tailwindcss()],
     resolve: {
       alias: {
         '@layouts': resolve(__dirname, './src/layout')
