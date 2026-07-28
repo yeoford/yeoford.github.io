@@ -3,20 +3,30 @@
 The source for [yeoford.org](https://yeoford.org), including village
 information, the Community Hall Calendar, and the Village Voice Archive.
 
-The site is built with Astro and deployed to GitHub Pages. Bun `1.3.14` is the
-project package manager and JavaScript runtime.
+The site is built with Astro and deployed to GitHub Pages. It requires Node
+`>=22.22.3` and uses Bun `1.3.14` as the package manager and JavaScript runtime.
 
 ## Setup
 
-Install Bun `1.3.14`, clone the repository, and install the locked dependency
-graph:
+Install Node `22.22.3` (recorded in `.nvmrc`) and Bun `1.3.14`, clone the
+repository, and install the locked dependency graph:
 
 ```sh
+nvm install
+bun --version
 bun ci
 ```
 
 `bun ci` fails rather than changing `bun.lock`, making it suitable for clean
-checkouts and CI.
+checkouts and CI. Install the Chromium browser used by the smoke suite once per
+development machine:
+
+```sh
+bunx playwright install chromium
+```
+
+Linux CI and fresh Linux environments can install the browser and its system
+dependencies with `bunx playwright install --with-deps chromium`.
 
 ## Development
 
@@ -50,19 +60,23 @@ It runs, in order:
 4. Vitest in non-watch mode.
 5. Knip unused-code analysis.
 6. The production build.
+7. Playwright browser smoke tests against the built site at desktop and mobile
+   viewports.
 
 Individual commands are also available:
 
-| Command                | Purpose                                       |
-| ---------------------- | --------------------------------------------- |
-| `bun run format`       | Format supported repository files             |
-| `bun run format:check` | Check formatting without changing files       |
-| `bun run lint`         | Run ESLint                                    |
-| `bun run lint:fix`     | Apply safe ESLint fixes                       |
-| `bun run typecheck`    | Run Astro and TypeScript diagnostics          |
-| `bun run test --run`   | Run unit tests once                           |
-| `bun run unused`       | Find unused files, dependencies, and exports  |
-| `bun run build`        | Generate newsletter assets and build the site |
+| Command                | Purpose                                                |
+| ---------------------- | ------------------------------------------------------ |
+| `bun run format`       | Format supported repository files                      |
+| `bun run format:check` | Check formatting without changing files                |
+| `bun run lint`         | Run ESLint                                             |
+| `bun run lint:fix`     | Apply safe ESLint fixes                                |
+| `bun run typecheck`    | Run Astro and TypeScript diagnostics                   |
+| `bun run test --run`   | Run unit tests once                                    |
+| `bun run unused`       | Find unused files, dependencies, and exports           |
+| `bun run build`        | Generate newsletter assets and build the site          |
+| `bun run test:e2e`     | Build and run the browser smoke suite                  |
+| `bun run test:e2e:run` | Run browser tests against an existing production build |
 
 Running the complete gate must not create tracked cache or Derived Asset
 changes.
