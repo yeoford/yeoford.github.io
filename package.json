@@ -28,14 +28,15 @@
   "dependencies": {
     "@astrojs/react": "6.0.1",
     "@astrojs/sitemap": "^3.7.3",
-    "@napi-rs/canvas": "^0.1.100",
+    "@hyzyla/pdfium": "2.1.13",
     "@tailwindcss/vite": "^4.3.3",
     "astro": "7.1.4",
     "github-slugger": "^2.0.0",
     "pdfjs-dist": "^5.7.284",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "react-pdf": "^9.2.1"
+    "react-pdf": "^9.2.1",
+    "sharp": "0.35.3"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
