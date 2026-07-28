@@ -1,7 +1,7 @@
 /// <reference types="vitest" />
 import { fileURLToPath } from 'node:url';
 
-import { defineConfig } from 'vitest/config';
+import { configDefaults, defineConfig } from 'vitest/config';
 
 const helpersDirectory = fileURLToPath(
   new URL('./src/helpers', import.meta.url)
@@ -14,6 +14,7 @@ export default defineConfig({
     }
   },
   test: {
-    include: ['src/**/*.test.ts']
+    // Playwright owns tests/e2e; everything else is a unit test.
+    exclude: [...configDefaults.exclude, 'tests/e2e/**']
   }
 });

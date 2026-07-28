@@ -11,6 +11,8 @@ const __dirname = import.meta.dirname;
 
 // https://astro.build/config
 export default defineConfig({
+  // Astro 7 defaults to `'jsx'` whitespace handling; `true` keeps the
+  // pre-upgrade lossless compression so generated pages are preserved.
   compressHTML: true,
 
   integrations: [react(), sitemap()],

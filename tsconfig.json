@@ -6,7 +6,6 @@
     "jsx": "react-jsx",
     "jsxImportSource": "react",
     "module": "ESNext",
-    "types": ["bun"],
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],

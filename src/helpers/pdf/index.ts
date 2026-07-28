@@ -42,6 +42,27 @@ const EDITORIAL_RECT: Rect = {
   y: 200
 };
 
+const DATE_RECT: Rect = {
+  height: 120,
+  width: 373,
+  x: 785,
+  y: 97
+};
+
+const DESCRIPTION_RECT: Rect = {
+  height: 100,
+  width: 1093,
+  x: 49,
+  y: 1540
+};
+
+const ISSUE_RECT: Rect = {
+  height: 73,
+  width: 193,
+  x: 936,
+  y: 244
+};
+
 interface ProcessNewsletterOptions {
   extractPagesToImage?: number[];
   outputDataDir?: string;
@@ -62,38 +83,26 @@ export const processNewsletter = async (
     skipExistingOutputs
   }: ProcessNewsletterOptions = {}
 ) => {
-  const pdfBytes = new Uint8Array(await readFile(filePath));
-  const pdfDoc = await pdfjs.getDocument({ data: pdfBytes }).promise;
+  // PDF.js takes ownership of the buffer it is handed, so it gets a copy and
+  // the original bytes stay available for rendering.
+  const pdfBytes = await readFile(filePath);
+  const pdfDoc = await pdfjs.getDocument({ data: new Uint8Array(pdfBytes) })
+    .promise;
 
   try {
-    const firstPage = await pdfDoc.getPage(1);
-    const editorialPage = await pdfDoc.getPage(3);
+    const [firstPage, editorialPage] = await Promise.all([
+      pdfDoc.getPage(1),
+      pdfDoc.getPage(3)
+    ]);
 
-    const dateRect = {
-      height: 120,
-      width: 373,
-      x: 785,
-      y: 97
-    };
-
-    const descriptionRect = {
-      height: 100,
-      width: 1093,
-      x: 49,
-      y: 1540
-    };
-
-    const issueRect = {
-      height: 73,
-      width: 193,
-      x: 936,
-      y: 244
-    };
-
-    const dateText = await getTextInRect(firstPage, dateRect);
-    const description = await getTextInRect(firstPage, descriptionRect);
-    const issueText = await getTextInRect(firstPage, issueRect);
-    const editorialText = await getTextInRect(editorialPage, EDITORIAL_RECT);
+    const [dateText, description, issueText, editorialText] = await Promise.all(
+      [
+        getTextInRect(firstPage, DATE_RECT),
+        getTextInRect(firstPage, DESCRIPTION_RECT),
+        getTextInRect(firstPage, ISSUE_RECT),
+        getTextInRect(editorialPage, EDITORIAL_RECT)
+      ]
+    );
 
     const date = parseMonthYear(dateText);
     const issueNumber = issueTextToIssueNumber(issueText);
@@ -126,7 +135,7 @@ export const processNewsletter = async (
       }
 
       if (imageOutputs.length > 0) {
-        await renderPdfImages(filePath, imageOutputs);
+        await renderPdfImages(pdfBytes, imageOutputs);
       }
     }
 
@@ -179,11 +188,7 @@ export const processNewsletter = async (
       }
     };
   } finally {
-    try {
-      await pdfDoc.cleanup();
-    } finally {
-      await pdfDoc.destroy();
-    }
+    await pdfDoc.destroy();
   }
 };
 
@@ -215,20 +220,18 @@ interface ImageOutput {
 }
 
 const renderPdfImages = async (
-  filePath: string,
+  pdfBytes: Uint8Array,
   imageOutputs: ImageOutput[]
 ) => {
   const { PDFiumLibrary } = await import('@hyzyla/pdfium');
   const library = await PDFiumLibrary.init();
-  let document;
+  let pdfiumDocument;
 
   try {
-    document = await library.loadDocument(
-      new Uint8Array(await readFile(filePath))
-    );
+    pdfiumDocument = await library.loadDocument(pdfBytes);
 
     for (const output of imageOutputs) {
-      const page = document.getPage(output.pageNumber - 1);
+      const page = pdfiumDocument.getPage(output.pageNumber - 1);
       const image = await page.render({
         render: async ({ data, height, width }) => {
           let pipeline = sharp(data, {
@@ -255,7 +258,7 @@ const renderPdfImages = async (
     log.error('Error rendering PDF page:', error);
     throw error;
   } finally {
-    document?.destroy();
+    pdfiumDocument?.destroy();
     library.destroy();
   }
 };

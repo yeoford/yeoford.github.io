@@ -1,6 +1,8 @@
 ---
 import 'maplibre-gl/dist/maplibre-gl.css';
 
+import { MAP_STYLE_URL } from '@constants';
+
 interface Props {
   center?: [number, number];
   height?: string;
@@ -19,7 +21,7 @@ const {
   class="map-container"
   data-center={JSON.stringify(center)}
   data-map
-  data-style="https://tiles.openfreemap.org/styles/liberty"
+  data-style={MAP_STYLE_URL}
   data-zoom={zoom}
   style={`width: 100%; height: ${height};`}
   transition:name="map"
@@ -39,24 +41,31 @@ const {
 
   const maps = new Map<HTMLElement, MapLibreMap>();
 
-  const showMapFallback = (container: HTMLElement, message: string) => {
+  const setMapFallback = (container: HTMLElement, message?: string) => {
     const fallback = container.querySelector<HTMLElement>('.map-fallback');
     if (!fallback) {
       return;
     }
 
-    fallback.hidden = false;
+    fallback.hidden = !message;
     const text = fallback.querySelector('p');
-    if (text) {
+    if (message && text) {
       text.textContent = message;
     }
   };
 
-  const hideMapFallback = (container: HTMLElement) => {
-    const fallback = container.querySelector<HTMLElement>('.map-fallback');
-    if (fallback) {
-      fallback.hidden = true;
-    }
+  const readMapConfig = (container: HTMLElement) => {
+    const center: unknown = JSON.parse(container.dataset.center ?? 'null');
+    const isLngLat =
+      Array.isArray(center) &&
+      center.length === 2 &&
+      center.every(value => typeof value === 'number');
+
+    return {
+      center: isLngLat ? (center as [number, number]) : undefined,
+      style: container.dataset.style,
+      zoom: Number(container.dataset.zoom)
+    };
   };
 
   const initializeMaps = () => {
@@ -67,26 +76,20 @@ const {
         continue;
       }
 
-      const center = JSON.parse(container.dataset.center ?? '[]') as [
-        number,
-        number
-      ];
       const map = new MapLibreMap({
-        center,
-        container,
-        style: container.dataset.style,
-        zoom: Number(container.dataset.zoom)
+        ...readMapConfig(container),
+        container
       });
       maps.set(container, map);
 
       let loaded = false;
       map.once('load', () => {
         loaded = true;
-        hideMapFallback(container);
+        setMapFallback(container);
       });
       map.once('error', () => {
         if (!loaded) {
-          showMapFallback(container, 'Map unavailable');
+          setMapFallback(container, 'Map unavailable');
         }
       });
     }
@@ -99,7 +102,8 @@ const {
     maps.clear();
   };
 
-  initializeMaps();
+  // ClientRouter fires astro:page-load on the initial load as well as after
+  // every swap, so it is the single entry point for setup.
   document.addEventListener('astro:page-load', initializeMaps);
   document.addEventListener('astro:before-swap', destroyMaps);
 </script>

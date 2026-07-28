@@ -12,9 +12,11 @@ export default defineConfig({
       }
     },
     {
+      // A real mobile profile (touch, mobile UA, device pixel ratio) narrowed
+      // to the 390px width the acceptance criteria call out.
       name: 'mobile',
       use: {
-        ...devices['Desktop Chrome'],
+        ...devices['Pixel 7'],
         viewport: { height: 844, width: 390 }
       }
     }

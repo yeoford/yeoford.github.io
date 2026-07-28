@@ -33,17 +33,6 @@ export default tseslint.config(
     }
   },
   {
-    files: [
-      'src/components/Map.astro',
-      'src/components/Map.astro/*.js',
-      'src/components/Map.astro/*.ts'
-    ],
-    rules: {
-      'func-style': 'off',
-      'no-console': 'off'
-    }
-  },
-  {
     files: ['src/components/pdf-viewer/index.tsx'],
     rules: {
       'react-hooks/set-state-in-effect': 'off'

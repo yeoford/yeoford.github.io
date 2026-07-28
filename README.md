@@ -4,18 +4,24 @@ The source for [yeoford.org](https://yeoford.org), including village
 information, the Community Hall Calendar, and the Village Voice Archive.
 
 The site is built with Astro and deployed to GitHub Pages. It requires Node
-`>=22.22.3` and uses Bun `1.3.14` as the package manager and JavaScript runtime.
+`>=22.12.0` (as recorded in `engines`) and uses Bun `1.3.14` as the package
+manager and JavaScript runtime.
 
 ## Setup
 
-Install Node `22.22.3` (recorded in `.nvmrc`) and Bun `1.3.14`, clone the
-repository, and install the locked dependency graph:
+Install Node `22.22.3` — the version development and CI run, recorded in
+`.nvmrc` — and Bun `1.3.14`, then clone the repository and install the locked
+dependency graph:
 
 ```sh
 nvm install
-bun --version
+```
+
+```sh
 bun ci
 ```
+
+`bun --version` should report `1.3.14`; the quality gate assumes that Bun.
 
 `bun ci` fails rather than changing `bun.lock`, making it suitable for clean
 checkouts and CI. Install the Chromium browser used by the smoke suite once per

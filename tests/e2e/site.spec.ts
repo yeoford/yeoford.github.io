@@ -1,5 +1,19 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import { MAP_STYLE_URL } from '../../src/constants';
+
+const cdnRequests = (page: Page) => {
+  const urls: string[] = [];
+
+  page.on('request', request => {
+    if (request.url().includes('unpkg.com')) {
+      urls.push(request.url());
+    }
+  });
+
+  return urls;
+};
+
 const applicationErrors = (page: Page) => {
   const errors: string[] = [];
 
@@ -64,22 +78,14 @@ test('map loads and retains a usable external-data fallback', async ({
   page
 }) => {
   const errors = applicationErrors(page);
-  const unpkgRequests: string[] = [];
-  page.on('request', request => {
-    if (request.url().includes('unpkg.com')) {
-      unpkgRequests.push(request.url());
-    }
-  });
+  const unpkgRequests = cdnRequests(page);
 
-  await page.route(
-    'https://tiles.openfreemap.org/styles/liberty',
-    async route => {
-      await route.fulfill({
-        body: JSON.stringify({ layers: [], sources: {}, version: 8 }),
-        contentType: 'application/json'
-      });
-    }
-  );
+  await page.route(MAP_STYLE_URL, async route => {
+    await route.fulfill({
+      body: JSON.stringify({ layers: [], sources: {}, version: 8 }),
+      contentType: 'application/json'
+    });
+  });
   await page.goto('/the-village');
   await expect(page.locator('.maplibregl-canvas')).toBeVisible();
   await expectNoHorizontalOverflow(page);
@@ -91,10 +97,8 @@ test('map loads and retains a usable external-data fallback', async ({
   await page.getByRole('link', { name: 'The Village' }).click();
   await expect(page.locator('.maplibregl-canvas')).toBeVisible();
 
-  await page.unroute('https://tiles.openfreemap.org/styles/liberty');
-  await page.route('https://tiles.openfreemap.org/styles/liberty', route =>
-    route.abort()
-  );
+  await page.unroute(MAP_STYLE_URL);
+  await page.route(MAP_STYLE_URL, route => route.abort());
   await page.reload();
   await expect(page.getByText('Map unavailable')).toBeVisible();
   await expect(
@@ -107,12 +111,7 @@ test('latest and archive Issue PDFs expose working controls', async ({
 }) => {
   const errors = applicationErrors(page);
   const workerResponses: { ok: boolean; url: string }[] = [];
-  const unpkgRequests: string[] = [];
-  page.on('request', request => {
-    if (request.url().includes('unpkg.com')) {
-      unpkgRequests.push(request.url());
-    }
-  });
+  const unpkgRequests = cdnRequests(page);
   page.on('response', response => {
     if (response.url().includes('pdf.worker')) {
       workerResponses.push({ ok: response.ok(), url: response.url() });
