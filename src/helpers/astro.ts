@@ -1,7 +1,8 @@
 import { getCollection } from 'astro:content';
+
 import type { Entry, EntryTypes, NewsletterEntry } from '@types';
 
-export const getEntries = async (collection: EntryTypes): Promise<Entry[]> => {
+const getEntries = async (collection: EntryTypes): Promise<Entry[]> => {
   const entries: Entry[] = await getCollection(collection);
   // return entries.map((entry) => {
   //   entry.url = getEntryUrl(entry);

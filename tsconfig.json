@@ -1,54 +1,25 @@
 {
   "extends": "astro/tsconfigs/strict",
-  "include": [
-    ".astro/types.d.ts",
-    "**/*"
-  ],
-  "exclude": [
-    "dist"
-  ],
+  "include": [".astro/types.d.ts", "**/*"],
+  "exclude": ["dist"],
   "compilerOptions": {
     "jsx": "react-jsx",
     "jsxImportSource": "react",
     "module": "ESNext",
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "./src/*"
-      ],
-      "@constants": [
-        "./src/constants.ts"
-      ],
-      "@components/*": [
-        "./src/components/*"
-      ],
-      "@contexts/*": [
-        "./src/contexts/*"
-      ],
-      "@helpers/*": [
-        "./src/helpers/*"
-      ],
-      "@images/*": [
-        "./src/images/*"
-      ],
-      "@layouts/*": [
-        "./src/layout/*"
-      ],
-      "@newsletter/*": [
-        "./newsletter/*"
-      ],
-      "@styles/*": [
-        "./src/styles/*"
-      ],
-      "@pages/*": [
-        "./src/pages/*"
-      ],
-      "@types": [
-        "./src/types.ts"
-      ],
-      "@ui/*": [
-        "./src/components/ui/*"
-      ]
+      "@/*": ["./src/*"],
+      "@constants": ["./src/constants.ts"],
+      "@components/*": ["./src/components/*"],
+      "@contexts/*": ["./src/contexts/*"],
+      "@helpers/*": ["./src/helpers/*"],
+      "@images/*": ["./src/images/*"],
+      "@layouts/*": ["./src/layout/*"],
+      "@newsletter/*": ["./newsletter/*"],
+      "@styles/*": ["./src/styles/*"],
+      "@pages/*": ["./src/pages/*"],
+      "@types": ["./src/types.ts"],
+      "@ui/*": ["./src/components/ui/*"]
     }
   }
 }

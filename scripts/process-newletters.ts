@@ -1,6 +1,7 @@
 import path from 'node:path';
 
 import { createLog } from '@helpers/log';
+
 import { processNewsletter } from '../src/helpers/pdf';
 
 const log = createLog('process-newsletters');
@@ -35,6 +36,7 @@ for await (const file of pdfFiles) {
     outputDataDir,
     outputImageDir,
     outputPdfDir,
+    skipExistingOutputs: true
     // extractPagesToImage: [1, 3],
   });
   log.info('processed', result);

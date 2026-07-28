@@ -1,10 +1,5 @@
 ---
-import { getPublishedNewsletters, sortEntriesByDate } from '@helpers/astro';
 import Layout from '@layouts/page.astro';
-
-const newsletters = await getPublishedNewsletters();
-
-const sortedNewsletters = sortEntriesByDate(newsletters);
 ---
 
 <Layout>
@@ -16,62 +11,62 @@ const sortedNewsletters = sortEntriesByDate(newsletters);
     fill in all of the sections:
   </div>
 
-  <form id="contactForm" class="max-w-lg">
+  <form class="max-w-lg" id="contactForm">
     <div class="mb-4">
-      <label for="name" class="block text-lg font-medium mb-2"
+      <label class="block text-lg font-medium mb-2" for="name"
         >Your Name (required)</label
       >
       <input
-        type="text"
+        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         id="name"
         name="name"
         required
-        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        type="text"
       />
     </div>
 
     <div class="mb-4">
-      <label for="email" class="block text-lg font-medium mb-2"
+      <label class="block text-lg font-medium mb-2" for="email"
         >Your Email (required)</label
       >
       <input
-        type="email"
+        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         id="email"
         name="email"
         required
-        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        type="email"
       />
     </div>
 
     <div class="mb-4">
-      <label for="subject" class="block text-lg font-medium mb-2"
+      <label class="block text-lg font-medium mb-2" for="subject"
         >Subject (required)</label
       >
       <input
-        type="text"
+        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         id="subject"
         name="subject"
         required
-        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        type="text"
       />
     </div>
 
     <div class="mb-4">
-      <label for="message" class="block text-lg font-medium mb-2"
+      <label class="block text-lg font-medium mb-2" for="message"
         >Message (required)</label
       >
       <textarea
+        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         id="message"
         name="message"
         required
         rows="4"
-        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
       ></textarea>
     </div>
 
     <button
-      type="submit"
-      class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+      class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      type="submit">
       Send
     </button>
   </form>

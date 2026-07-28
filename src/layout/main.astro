@@ -2,15 +2,13 @@
 import { ClientRouter } from 'astro:transitions';
 
 import BaseHead from '@components/layout/base-head.astro';
-import Footer from '@components/layout/footer.astro';
-import Header from '@components/layout/header.astro';
 import Tracker from '@components/layout/tracker.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '@constants';
 ---
 
 <html lang="en">
   <head>
-    <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+    <BaseHead description={SITE_DESCRIPTION} title={SITE_TITLE} />
     <ClientRouter />
   </head>
   <body class="min-h-screen flex flex-col bg-emerald-500">

@@ -13,10 +13,10 @@ const sortedNewsletters = sortEntriesByDate(newsletters);
     {
       sortedNewsletters.map(newsletter => (
         <Card
-          title={`Village Voice - ${newsletter.data.date.toLocaleString('en-GB', { month: 'long', year: 'numeric' })}`}
-          image={`/images/newsletters/${newsletter.data.slug}-cover.jpg`}
           description={newsletter.data.description ?? ''}
+          image={`/images/newsletters/${newsletter.data.slug}-cover.jpg`}
           link={`/newsletter/${newsletter.data.slug}`}
+          title={`Village Voice - ${newsletter.data.date.toLocaleString('en-GB', { month: 'long', year: 'numeric' })}`}
         />
       ))
     }

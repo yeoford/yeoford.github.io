@@ -1,14 +1,14 @@
 ---
 interface Props {
   center?: [number, number];
-  zoom?: number;
   height?: string;
+  zoom?: number;
 }
 
 const {
   center = [-3.725, 50.776], // Default to Yeoford coordinates
-  zoom = 14,
-  height = '500px'
+  height = '500px',
+  zoom = 14
 } = Astro.props;
 
 const maplibreBaseUrl = 'https://unpkg.com/maplibre-gl@5.6.2/dist';
@@ -16,12 +16,12 @@ const mapStyleUrl = 'https://tiles.openfreemap.org/styles/liberty';
 ---
 
 <div
-  id="map"
-  class="map-container"
   aria-label="Map of Yeoford"
+  class="map-container"
+  id="map"
   style={`width: 100%; height: ${height};`}
   transition:name="map">
-  <div id="map-fallback" class="map-fallback" role="status">
+  <div class="map-fallback" id="map-fallback" role="status">
     <p>Loading map...</p>
     <a
       href="https://www.openstreetmap.org/search?query=Yeoford%2C%20Devon"
@@ -31,7 +31,7 @@ const mapStyleUrl = 'https://tiles.openfreemap.org/styles/liberty';
   </div>
 </div>
 
-<script define:vars={{ center, maplibreBaseUrl, mapStyleUrl, zoom }}>
+<script define:vars={{ center, maplibreBaseUrl, mapStyleUrl, zoom }} is:inline>
   let map = null;
   const pendingAssets = new Map();
 
@@ -52,7 +52,7 @@ const mapStyleUrl = 'https://tiles.openfreemap.org/styles/liberty';
       script.src = src;
       script.onload = resolve;
       script.onerror = reject;
-      document.head.appendChild(script);
+      document.head.append(script);
     }).finally(() => pendingAssets.delete(src));
     pendingAssets.set(src, pendingScript);
     return pendingScript;
@@ -73,7 +73,7 @@ const mapStyleUrl = 'https://tiles.openfreemap.org/styles/liberty';
       link.href = href;
       link.onload = resolve;
       link.onerror = reject;
-      document.head.appendChild(link);
+      document.head.append(link);
     }).finally(() => pendingAssets.delete(href));
     pendingAssets.set(href, pendingStylesheet);
     return pendingStylesheet;
@@ -119,10 +119,10 @@ const mapStyleUrl = 'https://tiles.openfreemap.org/styles/liberty';
       map.remove();
     }
     map = new window.maplibregl.Map({
+      center,
+      container: 'map',
       style: mapStyleUrl,
-      center: center,
-      zoom: zoom,
-      container: 'map'
+      zoom
     });
     let loaded = false;
     map.once('load', () => {

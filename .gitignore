@@ -22,3 +22,11 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# tool caches
+.eslintcache
+
+# generated Village Voice assets (tracked legacy files remain until issue #4)
+public/images/newsletters/
+public/pdf/
+src/content/newsletters/
