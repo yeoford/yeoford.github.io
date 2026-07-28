@@ -1,3 +1,4 @@
+import { readdir } from 'node:fs/promises';
 import path from 'node:path';
 
 import { createLog } from '@helpers/log';
@@ -6,32 +7,33 @@ import { processNewsletter } from '../src/helpers/pdf';
 
 const log = createLog('process-newsletters');
 
-const NEWSLETTERS_DIR = path.resolve(import.meta.dir, '..', 'newsletter');
+const PROJECT_DIR = path.resolve(import.meta.dirname, '..');
+const NEWSLETTERS_DIR = path.resolve(PROJECT_DIR, 'newsletter');
 
-const entries = await Bun.$`ls ${NEWSLETTERS_DIR}/*.pdf`.text();
-const pdfFiles = entries.trim().split('\n');
+const entries = await readdir(NEWSLETTERS_DIR);
+const pdfFiles = entries
+  .filter(entry => entry.endsWith('.pdf'))
+  .map(entry => path.resolve(NEWSLETTERS_DIR, entry));
 
 const outputImageDir = path.resolve(
-  import.meta.dir,
-  '..',
+  PROJECT_DIR,
   'public',
   'images',
   'newsletters'
 );
 const outputDataDir = path.resolve(
-  import.meta.dir,
-  '..',
+  PROJECT_DIR,
   'src',
   'content',
   'newsletters'
 );
 
-const outputPdfDir = path.resolve(import.meta.dir, '..', 'public', 'pdf');
+const outputPdfDir = path.resolve(PROJECT_DIR, 'public', 'pdf');
 
 log.info('outputImageDir', outputImageDir);
 log.info('outputDataDir', outputDataDir);
 
-for await (const file of pdfFiles) {
+for (const file of pdfFiles) {
   const result = await processNewsletter(file, {
     outputDataDir,
     outputImageDir,

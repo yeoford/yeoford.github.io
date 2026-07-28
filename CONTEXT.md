@@ -40,6 +40,16 @@ view over the Archive, not a separate collection.
 The complete collection of published Village Voice Issues, including the
 Latest Issue, ordered by Publication Month.
 
+### PDF Reader
+
+The visitor-facing control that displays an Issue PDF in the website and lets a
+visitor move between its pages.
+
+### Map Fallback
+
+The visible OpenStreetMap link shown when the interactive Yeoford map cannot
+load its external map data.
+
 ### Community Hall Calendar
 
 The visitor-facing schedule of events and availability for Yeoford Community

@@ -11,9 +11,10 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '@constants';
     <BaseHead description={SITE_DESCRIPTION} title={SITE_TITLE} />
     <ClientRouter />
   </head>
-  <body class="min-h-screen flex flex-col bg-emerald-500">
+  <body class="flex min-h-screen flex-col bg-emerald-500">
     <main class="flex-grow">
       <slot />
     </main>
-  </body><Tracker />
+    <Tracker />
+  </body>
 </html>

@@ -1,21 +1,22 @@
 ---
-
 import HeaderLink from './header-link.astro';
 ---
 
 <header
-  class="m-0 px-4 shadow-[0_2px_8px_rgba(var(--black),0.05)] md:shadow-none md:pointer-events-auto">
-  <nav class="flex flex-col md:flex-row items-center justify-center py-2">
+  class="m-0 px-4 shadow-[0_2px_8px_rgba(var(--black),0.05)] md:pointer-events-auto md:shadow-none"
+>
+  <nav class="flex flex-col items-center justify-center py-2 md:flex-row">
     <!-- <h2 class="m-0 text-base mb-4 md:mb-0">
       <a href="/" class="no-underline">{SITE_TITLE}</a>
     </h2> -->
     <div
-      class="internal-links flex flex-col md:flex-row items-center gap-2 md:gap-4 w-full md:w-auto">
+      class="internal-links flex w-full flex-col items-center gap-2 md:w-auto md:flex-row md:gap-4"
+    >
       <HeaderLink href="/the-village">The Village</HeaderLink>
       <HeaderLink href="/community-hall">Community Hall</HeaderLink>
       <HeaderLink href="/village-voice">Village Voice</HeaderLink>
       <HeaderLink href="/contact">Contact</HeaderLink>
     </div>
-    <div class="social-links hidden md:flex gap-2"></div>
+    <div class="social-links hidden gap-2 md:flex"></div>
   </nav>
 </header>

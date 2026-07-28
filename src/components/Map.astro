@@ -1,4 +1,8 @@
 ---
+import 'maplibre-gl/dist/maplibre-gl.css';
+
+import { MAP_STYLE_URL } from '@constants';
+
 interface Props {
   center?: [number, number];
   height?: string;
@@ -10,18 +14,19 @@ const {
   height = '500px',
   zoom = 14
 } = Astro.props;
-
-const maplibreBaseUrl = 'https://unpkg.com/maplibre-gl@5.6.2/dist';
-const mapStyleUrl = 'https://tiles.openfreemap.org/styles/liberty';
 ---
 
 <div
   aria-label="Map of Yeoford"
   class="map-container"
-  id="map"
+  data-center={JSON.stringify(center)}
+  data-map
+  data-style={MAP_STYLE_URL}
+  data-zoom={zoom}
   style={`width: 100%; height: ${height};`}
-  transition:name="map">
-  <div class="map-fallback" id="map-fallback" role="status">
+  transition:name="map"
+>
+  <div class="map-fallback" role="status">
     <p>Loading map...</p>
     <a
       href="https://www.openstreetmap.org/search?query=Yeoford%2C%20Devon"
@@ -31,113 +36,76 @@ const mapStyleUrl = 'https://tiles.openfreemap.org/styles/liberty';
   </div>
 </div>
 
-<script define:vars={{ center, maplibreBaseUrl, mapStyleUrl, zoom }} is:inline>
-  let map = null;
-  const pendingAssets = new Map();
+<script>
+  import { Map as MapLibreMap } from 'maplibre-gl';
 
-  function loadScript(src) {
-    if (window.maplibregl) {
-      return Promise.resolve();
-    }
-    if (pendingAssets.has(src)) {
-      return pendingAssets.get(src);
-    }
+  const maps = new Map<HTMLElement, MapLibreMap>();
 
-    const pendingScript = new Promise((resolve, reject) => {
-      if (document.querySelector(`script[src='${src}']`)) {
-        resolve();
-        return;
-      }
-      const script = document.createElement('script');
-      script.src = src;
-      script.onload = resolve;
-      script.onerror = reject;
-      document.head.append(script);
-    }).finally(() => pendingAssets.delete(src));
-    pendingAssets.set(src, pendingScript);
-    return pendingScript;
-  }
-
-  function loadCSS(href) {
-    if (pendingAssets.has(href)) {
-      return pendingAssets.get(href);
-    }
-
-    const pendingStylesheet = new Promise((resolve, reject) => {
-      if (document.querySelector(`link[href='${href}']`)) {
-        resolve();
-        return;
-      }
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = href;
-      link.onload = resolve;
-      link.onerror = reject;
-      document.head.append(link);
-    }).finally(() => pendingAssets.delete(href));
-    pendingAssets.set(href, pendingStylesheet);
-    return pendingStylesheet;
-  }
-
-  function showMapFallback(message) {
-    const fallback = document.getElementById('map-fallback');
+  const setMapFallback = (container: HTMLElement, message?: string) => {
+    const fallback = container.querySelector<HTMLElement>('.map-fallback');
     if (!fallback) {
       return;
     }
-    fallback.hidden = false;
+
+    fallback.hidden = !message;
     const text = fallback.querySelector('p');
-    if (text) {
+    if (message && text) {
       text.textContent = message;
     }
-  }
+  };
 
-  function hideMapFallback() {
-    const fallback = document.getElementById('map-fallback');
-    if (fallback) {
-      fallback.hidden = true;
-    }
-  }
+  const readMapConfig = (container: HTMLElement) => {
+    const center: unknown = JSON.parse(container.dataset.center ?? 'null');
+    const isLngLat =
+      Array.isArray(center) &&
+      center.length === 2 &&
+      center.every(value => typeof value === 'number');
 
-  async function initMapWithLib() {
-    try {
-      await loadCSS(`${maplibreBaseUrl}/maplibre-gl.css`);
-      await loadScript(`${maplibreBaseUrl}/maplibre-gl.js`);
-      initMap();
-    } catch (error) {
-      console.error('Unable to load map library', error);
-      showMapFallback('Map unavailable');
-    }
-  }
+    return {
+      center: isLngLat ? (center as [number, number]) : undefined,
+      style: container.dataset.style,
+      zoom: Number(container.dataset.zoom)
+    };
+  };
 
-  function initMap() {
-    const container = document.getElementById('map');
-    if (!container) {
-      setTimeout(initMap, 50);
-      return;
+  const initializeMaps = () => {
+    for (const container of document.querySelectorAll<HTMLElement>(
+      '[data-map]'
+    )) {
+      if (maps.has(container)) {
+        continue;
+      }
+
+      const map = new MapLibreMap({
+        ...readMapConfig(container),
+        container
+      });
+      maps.set(container, map);
+
+      let loaded = false;
+      map.once('load', () => {
+        loaded = true;
+        setMapFallback(container);
+      });
+      map.once('error', () => {
+        if (!loaded) {
+          setMapFallback(container, 'Map unavailable');
+        }
+      });
     }
-    if (map) {
+  };
+
+  const destroyMaps = () => {
+    for (const map of maps.values()) {
       map.remove();
     }
-    map = new window.maplibregl.Map({
-      center,
-      container: 'map',
-      style: mapStyleUrl,
-      zoom
-    });
-    let loaded = false;
-    map.once('load', () => {
-      loaded = true;
-      hideMapFallback();
-    });
-    map.once('error', () => {
-      if (!loaded) {
-        showMapFallback('Map unavailable');
-      }
-    });
-  }
+    maps.clear();
+  };
 
-  initMapWithLib();
-  document.addEventListener('astro:after-swap', initMapWithLib);
+  // ClientRouter fires astro:page-load on the initial load as well as after
+  // every swap, so it is the single entry point for setup.
+  document.addEventListener('astro:page-load', initializeMaps);
+  document.addEventListener('astro:before-swap', destroyMaps);
 </script>
 
 <style>

@@ -6,7 +6,10 @@ import { createLog } from '@helpers/log';
 
 const log = createLog('PdfViewer');
 
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@4.8.69/build/pdf.worker.min.mjs`;
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url
+).toString();
 
 export const PdfViewer = ({ path }: { path: string }) => {
   const [numPages, setNumPages] = useState<number>();

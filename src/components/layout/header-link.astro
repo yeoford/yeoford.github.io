@@ -11,11 +11,12 @@ const isActive = href === pathname || href === '/' + (subpath?.[0] || '');
 
 <a
   class:list={[
-    'inline-block py-2 px-2 no-underline border-b-4 border-transparent text-white/60 text-xl hover:text-white transition-colors w-full md:w-auto text-center',
-    { 'font-bold !text-white border-accent': isActive },
+    'inline-block w-full border-b-4 border-transparent px-2 py-2 text-center text-xl text-white/60 no-underline transition-colors hover:text-white md:w-auto',
+    { 'border-accent font-bold !text-white': isActive },
     className
   ]}
   href={href}
-  {...props}>
+  {...props}
+>
   <slot />
 </a>

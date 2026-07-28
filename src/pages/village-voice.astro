@@ -11,7 +11,7 @@ const newsletter = sortedNewsletters[0];
 
 <Layout>
   <div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold mb-6">
+    <h1 class="mb-6 text-3xl font-bold">
       Village Voice {newsletter.data.issueNumber} -
       {
         newsletter.data.date.toLocaleString('en-GB', {
@@ -24,21 +24,22 @@ const newsletter = sortedNewsletters[0];
       <PdfViewer client:only="react" path={newsletter.data.path} />
       <div class="mt-4 text-center">
         <a
-          class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+          class="inline-flex items-center rounded-md bg-green-600 px-4 py-2 text-white transition-colors hover:bg-green-700"
           download
-          href={newsletter.data.path}>
+          href={newsletter.data.path}
+        >
           <svg
-            class="h-5 w-5 mr-2"
+            class="mr-2 h-5 w-5"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg">
+            xmlns="http://www.w3.org/2000/svg"
+          >
             <path
               d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
               stroke-linecap="round"
               stroke-linejoin="round"
-              stroke-width="2"
-            ></path>
+              stroke-width="2"></path>
           </svg>
           Download PDF
         </a>

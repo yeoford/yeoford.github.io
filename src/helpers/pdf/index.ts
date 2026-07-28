@@ -1,14 +1,16 @@
-import { access, readFile } from 'node:fs/promises';
+import {
+  access,
+  copyFile,
+  readFile,
+  unlink,
+  writeFile
+} from 'node:fs/promises';
 import path from 'node:path';
 
-import type {
-  PDFPageProxy,
-  TextItem,
-  TextMarkedContent
-} from 'pdfjs-dist/types/src/display/api';
+import type { PDFPageProxy } from 'pdfjs-dist/types/src/display/api';
+import sharp from 'sharp';
 
 import { createLog } from '@helpers/log';
-import { Canvas, createCanvas } from '@napi-rs/canvas';
 
 import { parseMonthYear } from '../date';
 import { safeParseInt } from '../number';
@@ -40,6 +42,27 @@ const EDITORIAL_RECT: Rect = {
   y: 200
 };
 
+const DATE_RECT: Rect = {
+  height: 120,
+  width: 373,
+  x: 785,
+  y: 97
+};
+
+const DESCRIPTION_RECT: Rect = {
+  height: 100,
+  width: 1093,
+  x: 49,
+  y: 1540
+};
+
+const ISSUE_RECT: Rect = {
+  height: 73,
+  width: 193,
+  x: 936,
+  y: 244
+};
+
 interface ProcessNewsletterOptions {
   extractPagesToImage?: number[];
   outputDataDir?: string;
@@ -60,121 +83,113 @@ export const processNewsletter = async (
     skipExistingOutputs
   }: ProcessNewsletterOptions = {}
 ) => {
-  const pdfBytes = new Uint8Array(await readFile(filePath));
+  // PDF.js takes ownership of the buffer it is handed, so it gets a copy and
+  // the original bytes stay available for rendering.
+  const pdfBytes = await readFile(filePath);
+  const pdfDoc = await pdfjs.getDocument({ data: new Uint8Array(pdfBytes) })
+    .promise;
 
-  const pdfDoc = await pdfjs.getDocument({ data: pdfBytes }).promise;
-  const firstPage = await pdfDoc.getPage(1);
-  const editorialPage = await pdfDoc.getPage(3);
+  try {
+    const [firstPage, editorialPage] = await Promise.all([
+      pdfDoc.getPage(1),
+      pdfDoc.getPage(3)
+    ]);
 
-  const dateRect = {
-    height: 120,
-    width: 373,
-    x: 785,
-    y: 97
-  };
+    const [dateText, description, issueText, editorialText] = await Promise.all(
+      [
+        getTextInRect(firstPage, DATE_RECT),
+        getTextInRect(firstPage, DESCRIPTION_RECT),
+        getTextInRect(firstPage, ISSUE_RECT),
+        getTextInRect(editorialPage, EDITORIAL_RECT)
+      ]
+    );
 
-  const descriptionRect = {
-    height: 100,
-    width: 1093,
-    x: 49,
-    y: 1540
-  };
+    const date = parseMonthYear(dateText);
+    const issueNumber = issueTextToIssueNumber(issueText);
 
-  const issueRect = {
-    height: 73,
-    width: 193,
-    x: 936,
-    y: 244
-  };
+    const slug = slugify(
+      `newsletter-${date?.getFullYear()}-${date?.getMonth()}-${issueNumber}`
+    );
 
-  const dateText = await getTextInRect(firstPage, dateRect);
-  const description = await getTextInRect(firstPage, descriptionRect);
-  const issueText = await getTextInRect(firstPage, issueRect);
-  const editorialText = await getTextInRect(editorialPage, EDITORIAL_RECT);
+    if (outputImageDir) {
+      const imageOutputs: ImageOutput[] = [];
+      const coverImagePath = path.resolve(outputImageDir, `${slug}-cover.jpg`);
 
-  const date = parseMonthYear(dateText);
-  const issueNumber = issueTextToIssueNumber(issueText);
+      if (await shouldWriteOutput(coverImagePath, skipExistingOutputs)) {
+        imageOutputs.push({
+          crop: COVER_IMAGE_RECT,
+          pageNumber: 1,
+          path: coverImagePath
+        });
+      }
 
-  const slug = slugify(
-    `newsletter-${date?.getFullYear()}-${date?.getMonth()}-${issueNumber}`
-  );
-
-  if (outputImageDir) {
-    const coverImageFileName = `${slug}-cover.jpg`;
-    const coverImagePath = path.resolve(outputImageDir, coverImageFileName);
-
-    if (await shouldWriteOutput(coverImagePath, skipExistingOutputs)) {
-      const imageBuffer = await renderPageToImage(firstPage, COVER_IMAGE_RECT);
-      await Bun.write(coverImagePath, imageBuffer);
-    }
-
-    if (extractPagesToImage) {
-      for (const pageNumber of extractPagesToImage) {
-        const imageFileName = `${slug}-page-${pageNumber}.jpg`;
-        const imagePath = path.resolve(outputImageDir, imageFileName);
+      for (const pageNumber of extractPagesToImage ?? []) {
+        const imagePath = path.resolve(
+          outputImageDir,
+          `${slug}-page-${pageNumber}.jpg`
+        );
 
         if (await shouldWriteOutput(imagePath, skipExistingOutputs)) {
-          const page = await pdfDoc.getPage(pageNumber);
-          const imageBuffer = await renderPageToImage(page);
-          await Bun.write(imagePath, imageBuffer);
+          imageOutputs.push({ pageNumber, path: imagePath });
         }
       }
+
+      if (imageOutputs.length > 0) {
+        await renderPdfImages(pdfBytes, imageOutputs);
+      }
     }
-  }
 
-  if (outputDataDir) {
-    const dataFileName = `${slug}.json`;
-    const dataPath = path.resolve(outputDataDir, dataFileName);
+    if (outputDataDir) {
+      const dataPath = path.resolve(outputDataDir, `${slug}.json`);
 
-    if (await shouldWriteOutput(dataPath, skipExistingOutputs)) {
-      await Bun.write(
-        dataPath,
-        JSON.stringify(
-          {
-            date,
-            description,
-            editorial: editorialText,
-            issueNumber,
-            path: `/pdf/${slug}.pdf`,
-            slug
-          },
-          null,
-          2
-        )
-      );
+      if (await shouldWriteOutput(dataPath, skipExistingOutputs)) {
+        await writeFile(
+          dataPath,
+          JSON.stringify(
+            {
+              date,
+              description,
+              editorial: editorialText,
+              issueNumber,
+              path: `/pdf/${slug}.pdf`,
+              slug
+            },
+            null,
+            2
+          )
+        );
+      }
     }
-  }
 
-  if (outputPdfDir) {
-    const pdfFileName = `${slug}.pdf`;
-    const pdfPath = path.resolve(outputPdfDir, pdfFileName);
+    if (outputPdfDir) {
+      const pdfPath = path.resolve(outputPdfDir, `${slug}.pdf`);
 
-    if (await shouldWriteOutput(pdfPath, skipExistingOutputs)) {
-      await Bun.write(pdfPath, Bun.file(filePath));
+      if (await shouldWriteOutput(pdfPath, skipExistingOutputs)) {
+        await copyFile(filePath, pdfPath);
+      }
     }
-  }
 
-  if (removeAfterProcessing) {
-    await Bun.$`rm ${filePath}`.text();
-  }
-
-  await pdfDoc.cleanup();
-  // log.debug('pdf', { title, author, subject, keywords });
-
-  return {
-    metadata: {
-      issueDate: date,
-      issueNumber
-    },
-    path: filePath,
-    slug,
-    text: {
-      date: dateText,
-      description,
-      editorial: editorialText,
-      issue: issueText
+    if (removeAfterProcessing) {
+      await unlink(filePath);
     }
-  };
+
+    return {
+      metadata: {
+        issueDate: date,
+        issueNumber
+      },
+      path: filePath,
+      slug,
+      text: {
+        date: dateText,
+        description,
+        editorial: editorialText,
+        issue: issueText
+      }
+    };
+  } finally {
+    await pdfDoc.destroy();
+  }
 };
 
 const shouldWriteOutput = async (
@@ -198,60 +213,53 @@ const issueTextToIssueNumber = (issueText: string) => {
   return safeParseInt(issueNumber);
 };
 
-/**
- * Crops a canvas by a specified rectangle.
- *
- * @param {Canvas} sourceCanvas - The source canvas to crop from
- * @param {Rect} cropRect - The rectangle defining the crop area
- * @returns {Canvas} A new canvas containing the cropped area
- */
-const cropCanvas = (sourceCanvas: Canvas, cropRect: Rect): Canvas => {
-  // Create a new canvas with the dimensions of the crop rectangle
-  const croppedCanvas = createCanvas(cropRect.width, cropRect.height);
-  const ctx = croppedCanvas.getContext('2d');
+interface ImageOutput {
+  crop?: Rect;
+  pageNumber: number;
+  path: string;
+}
 
-  // Draw the cropped portion from the source canvas to the new canvas
-  ctx.drawImage(
-    sourceCanvas,
-    cropRect.x,
-    cropRect.y,
-    cropRect.width,
-    cropRect.height,
-    0,
-    0,
-    cropRect.width,
-    cropRect.height
-  );
-
-  return croppedCanvas;
-};
-
-const renderPageToImage = async (page: PDFPageProxy, cropRect?: Rect) => {
-  // Scale the page to 2x for a higher quality image output
-  const viewport = page.getViewport({ scale: 2.0 });
-  const canvas = createCanvas(viewport.width, viewport.height);
-  const context = canvas.getContext('2d');
-
-  // Create a compatible render context
-  const renderContext = {
-    canvas: canvas as unknown as HTMLCanvasElement,
-    canvasContext: context as unknown as CanvasRenderingContext2D,
-    viewport
-  };
+const renderPdfImages = async (
+  pdfBytes: Uint8Array,
+  imageOutputs: ImageOutput[]
+) => {
+  const { PDFiumLibrary } = await import('@hyzyla/pdfium');
+  const library = await PDFiumLibrary.init();
+  let pdfiumDocument;
 
   try {
-    // Render the PDF page to the canvas
-    await page.render(renderContext).promise;
+    pdfiumDocument = await library.loadDocument(pdfBytes);
 
-    if (cropRect) {
-      const cropped = cropCanvas(canvas, COVER_IMAGE_RECT);
-      return cropped.toBuffer('image/jpeg', 60);
+    for (const output of imageOutputs) {
+      const page = pdfiumDocument.getPage(output.pageNumber - 1);
+      const image = await page.render({
+        render: async ({ data, height, width }) => {
+          let pipeline = sharp(data, {
+            raw: { channels: 4, height, width }
+          });
+
+          if (output.crop) {
+            pipeline = pipeline.extract({
+              height: output.crop.height,
+              left: output.crop.x,
+              top: output.crop.y,
+              width: output.crop.width
+            });
+          }
+
+          return pipeline.jpeg({ quality: 60 }).toBuffer();
+        },
+        scale: 2
+      });
+
+      await writeFile(output.path, image.data);
     }
-
-    return canvas.toBuffer('image/jpeg', 60);
   } catch (error) {
     log.error('Error rendering PDF page:', error);
     throw error;
+  } finally {
+    pdfiumDocument?.destroy();
+    library.destroy();
   }
 };
 
@@ -281,7 +289,7 @@ const getTextInRect = async (page: PDFPageProxy, rect: Rect) => {
   };
 
   const text = textContent.items
-    .filter((item: TextItem | TextMarkedContent) => {
+    .filter(item => {
       if ('str' in item) {
         // Get the text item's bounding box in PDF coordinates
         const x = item.transform[4];
@@ -300,9 +308,7 @@ const getTextInRect = async (page: PDFPageProxy, rect: Rect) => {
       }
       return false;
     })
-    .map((item: TextItem | TextMarkedContent) =>
-      'str' in item ? item.str : ''
-    )
+    .map(item => ('str' in item ? item.str : ''))
     .join(' ');
 
   return text;
