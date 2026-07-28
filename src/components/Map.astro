@@ -10,19 +10,40 @@ const {
   zoom = 14,
   height = '500px'
 } = Astro.props;
+
+const maplibreBaseUrl = 'https://unpkg.com/maplibre-gl@5.6.2/dist';
+const mapStyleUrl = 'https://tiles.openfreemap.org/styles/liberty';
 ---
 
 <div
   id="map"
-  style={`width: 100%; height: ${height}; border-radius: 8px;`}
+  class="map-container"
+  aria-label="Map of Yeoford"
+  style={`width: 100%; height: ${height};`}
   transition:name="map">
+  <div id="map-fallback" class="map-fallback" role="status">
+    <p>Loading map...</p>
+    <a
+      href="https://www.openstreetmap.org/search?query=Yeoford%2C%20Devon"
+      rel="noopener noreferrer"
+      target="_blank">Open Yeoford on OpenStreetMap</a
+    >
+  </div>
 </div>
 
-<script define:vars={{ center, zoom }}>
+<script define:vars={{ center, maplibreBaseUrl, mapStyleUrl, zoom }}>
   let map = null;
+  const pendingAssets = new Map();
 
   function loadScript(src) {
-    return new Promise((resolve, reject) => {
+    if (window.maplibregl) {
+      return Promise.resolve();
+    }
+    if (pendingAssets.has(src)) {
+      return pendingAssets.get(src);
+    }
+
+    const pendingScript = new Promise((resolve, reject) => {
       if (document.querySelector(`script[src='${src}']`)) {
         resolve();
         return;
@@ -32,11 +53,17 @@ const {
       script.onload = resolve;
       script.onerror = reject;
       document.head.appendChild(script);
-    });
+    }).finally(() => pendingAssets.delete(src));
+    pendingAssets.set(src, pendingScript);
+    return pendingScript;
   }
 
   function loadCSS(href) {
-    return new Promise((resolve, reject) => {
+    if (pendingAssets.has(href)) {
+      return pendingAssets.get(href);
+    }
+
+    const pendingStylesheet = new Promise((resolve, reject) => {
       if (document.querySelector(`link[href='${href}']`)) {
         resolve();
         return;
@@ -47,13 +74,39 @@ const {
       link.onload = resolve;
       link.onerror = reject;
       document.head.appendChild(link);
-    });
+    }).finally(() => pendingAssets.delete(href));
+    pendingAssets.set(href, pendingStylesheet);
+    return pendingStylesheet;
+  }
+
+  function showMapFallback(message) {
+    const fallback = document.getElementById('map-fallback');
+    if (!fallback) {
+      return;
+    }
+    fallback.hidden = false;
+    const text = fallback.querySelector('p');
+    if (text) {
+      text.textContent = message;
+    }
+  }
+
+  function hideMapFallback() {
+    const fallback = document.getElementById('map-fallback');
+    if (fallback) {
+      fallback.hidden = true;
+    }
   }
 
   async function initMapWithLib() {
-    await loadCSS('https://unpkg.com/maplibre-gl/dist/maplibre-gl.css');
-    await loadScript('https://unpkg.com/maplibre-gl/dist/maplibre-gl.js');
-    initMap();
+    try {
+      await loadCSS(`${maplibreBaseUrl}/maplibre-gl.css`);
+      await loadScript(`${maplibreBaseUrl}/maplibre-gl.js`);
+      initMap();
+    } catch (error) {
+      console.error('Unable to load map library', error);
+      showMapFallback('Map unavailable');
+    }
   }
 
   function initMap() {
@@ -66,13 +119,60 @@ const {
       map.remove();
     }
     map = new window.maplibregl.Map({
-      style: 'https://tiles.openfreemap.org/styles/liberty',
+      style: mapStyleUrl,
       center: center,
       zoom: zoom,
       container: 'map'
+    });
+    let loaded = false;
+    map.once('load', () => {
+      loaded = true;
+      hideMapFallback();
+    });
+    map.once('error', () => {
+      if (!loaded) {
+        showMapFallback('Map unavailable');
+      }
     });
   }
 
   initMapWithLib();
   document.addEventListener('astro:after-swap', initMapWithLib);
 </script>
+
+<style>
+  .map-container {
+    position: relative;
+    overflow: hidden;
+    border-radius: 8px;
+    background: #eef2f6;
+  }
+
+  .map-fallback {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    text-align: center;
+    color: #334155;
+  }
+
+  .map-fallback[hidden] {
+    display: none;
+  }
+
+  .map-fallback p {
+    margin: 0;
+    font-size: 1rem;
+  }
+
+  .map-fallback a {
+    color: #2563eb;
+    text-decoration: underline;
+  }
+</style>
