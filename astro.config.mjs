@@ -8,7 +8,6 @@ import react from '@astrojs/react';
 import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
 
-const __filename = import.meta.filename;
 const __dirname = import.meta.dirname;
 
 // https://astro.build/config
@@ -18,7 +17,10 @@ export default defineConfig({
   site: 'https://yeoford.org',
 
   vite: {
-    plugins: [tailwindcss()],
+    plugins: [
+      // @ts-ignore Bun may install identical Vite types at two paths.
+      tailwindcss()
+    ],
     resolve: {
       alias: {
         '@layouts': resolve(__dirname, './src/layout')

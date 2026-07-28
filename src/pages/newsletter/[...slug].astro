@@ -21,7 +21,7 @@ const newsletter = Astro.props;
       Village Voice {newsletter.data.issueNumber}
     </h1>
     <div class="flex flex-col gap-4 h-screen">
-      <PdfViewer path={newsletter.data.path} client:only="react" />
+      <PdfViewer client:only="react" path={newsletter.data.path} />
     </div>
   </div>
 </Layout>

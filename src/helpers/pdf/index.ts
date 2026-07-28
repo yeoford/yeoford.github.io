@@ -1,11 +1,15 @@
-import { createLog } from '@helpers/log';
+import { access, readFile } from 'node:fs/promises';
 import path from 'node:path';
+
 import type {
   PDFPageProxy,
   TextItem,
-  TextMarkedContent,
+  TextMarkedContent
 } from 'pdfjs-dist/types/src/display/api';
+
+import { createLog } from '@helpers/log';
 import { Canvas, createCanvas } from '@napi-rs/canvas';
+
 import { parseMonthYear } from '../date';
 import { safeParseInt } from '../number';
 import { slugify } from '../string';
@@ -14,8 +18,6 @@ import { slugify } from '../string';
 const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
 
 const log = createLog('pdf');
-
-const NEWSLETTERS_DIR = path.resolve(import.meta.dir, '../../../newsletter');
 
 interface Rect {
   height: number;
@@ -28,49 +30,14 @@ const COVER_IMAGE_RECT: Rect = {
   height: 1201,
   width: 1068,
   x: 60,
-  y: 333,
+  y: 333
 };
 
 const EDITORIAL_RECT: Rect = {
   height: 800,
   width: 1064,
   x: 80,
-  y: 200,
-};
-
-export const scanNewsletters = async () => {
-  log.debug('newsletters path is ', NEWSLETTERS_DIR);
-
-  const entries = await Bun.$`ls ${NEWSLETTERS_DIR}/*.pdf`.text();
-  const pdfFiles = entries.trim().split('\n');
-
-  for await (const file of pdfFiles) {
-    const result = await processNewsletter(file);
-    log.debug('result', result);
-  }
-
-  // const newsletters = await Promise.all(files.map(async (file) => {
-  //   const pdf = await PDFDocument.load(file);
-  //   return pdf;
-  // }));
-};
-
-export const extractPageToImage = async (
-  filePath: string,
-  pageNumber: number,
-  { outputImageDir }: ProcessNewsletterOptions = {}
-) => {
-  const pdfBytes = await Bun.file(filePath).arrayBuffer();
-  const pdfDoc = await pdfjs.getDocument({ data: pdfBytes }).promise;
-  const page = await pdfDoc.getPage(pageNumber);
-  const imageBuffer = await renderPageToImage(page);
-
-  if (outputImageDir) {
-    const imageFileName = `page-${pageNumber}.jpg`;
-    await Bun.write(path.resolve(outputImageDir, imageFileName), imageBuffer);
-  }
-
-  return imageBuffer;
+  y: 200
 };
 
 interface ProcessNewsletterOptions {
@@ -79,6 +46,7 @@ interface ProcessNewsletterOptions {
   outputImageDir?: string;
   outputPdfDir?: string;
   removeAfterProcessing?: boolean;
+  skipExistingOutputs?: boolean;
 }
 
 export const processNewsletter = async (
@@ -89,9 +57,10 @@ export const processNewsletter = async (
     outputImageDir,
     outputPdfDir,
     removeAfterProcessing,
+    skipExistingOutputs
   }: ProcessNewsletterOptions = {}
 ) => {
-  const pdfBytes = await Bun.file(filePath).arrayBuffer();
+  const pdfBytes = new Uint8Array(await readFile(filePath));
 
   const pdfDoc = await pdfjs.getDocument({ data: pdfBytes }).promise;
   const firstPage = await pdfDoc.getPage(1);
@@ -101,21 +70,21 @@ export const processNewsletter = async (
     height: 120,
     width: 373,
     x: 785,
-    y: 97,
+    y: 97
   };
 
   const descriptionRect = {
     height: 100,
     width: 1093,
     x: 49,
-    y: 1540,
+    y: 1540
   };
 
   const issueRect = {
     height: 73,
     width: 193,
     x: 936,
-    y: 244,
+    y: 244
   };
 
   const dateText = await getTextInRect(firstPage, dateRect);
@@ -132,53 +101,57 @@ export const processNewsletter = async (
 
   if (outputImageDir) {
     const coverImageFileName = `${slug}-cover.jpg`;
+    const coverImagePath = path.resolve(outputImageDir, coverImageFileName);
 
-    const imageBuffer = await renderPageToImage(firstPage, COVER_IMAGE_RECT);
-
-    // save the image buffer to a file
-    await Bun.write(
-      path.resolve(outputImageDir, coverImageFileName),
-      imageBuffer
-    );
+    if (await shouldWriteOutput(coverImagePath, skipExistingOutputs)) {
+      const imageBuffer = await renderPageToImage(firstPage, COVER_IMAGE_RECT);
+      await Bun.write(coverImagePath, imageBuffer);
+    }
 
     if (extractPagesToImage) {
       for (const pageNumber of extractPagesToImage) {
-        const page = await pdfDoc.getPage(pageNumber);
-        const imageBuffer = await renderPageToImage(page);
         const imageFileName = `${slug}-page-${pageNumber}.jpg`;
-        await Bun.write(
-          path.resolve(outputImageDir, imageFileName),
-          imageBuffer
-        );
+        const imagePath = path.resolve(outputImageDir, imageFileName);
+
+        if (await shouldWriteOutput(imagePath, skipExistingOutputs)) {
+          const page = await pdfDoc.getPage(pageNumber);
+          const imageBuffer = await renderPageToImage(page);
+          await Bun.write(imagePath, imageBuffer);
+        }
       }
     }
   }
 
   if (outputDataDir) {
     const dataFileName = `${slug}.json`;
-    await Bun.write(
-      path.resolve(outputDataDir, dataFileName),
-      JSON.stringify(
-        {
-          date,
-          description,
-          editorial: editorialText,
-          issueNumber,
-          path: `/pdf/${slug}.pdf`,
-          slug,
-        },
-        null,
-        2
-      )
-    );
+    const dataPath = path.resolve(outputDataDir, dataFileName);
+
+    if (await shouldWriteOutput(dataPath, skipExistingOutputs)) {
+      await Bun.write(
+        dataPath,
+        JSON.stringify(
+          {
+            date,
+            description,
+            editorial: editorialText,
+            issueNumber,
+            path: `/pdf/${slug}.pdf`,
+            slug
+          },
+          null,
+          2
+        )
+      );
+    }
   }
 
   if (outputPdfDir) {
     const pdfFileName = `${slug}.pdf`;
-    await Bun.write(
-      path.resolve(outputPdfDir, pdfFileName),
-      Bun.file(filePath)
-    );
+    const pdfPath = path.resolve(outputPdfDir, pdfFileName);
+
+    if (await shouldWriteOutput(pdfPath, skipExistingOutputs)) {
+      await Bun.write(pdfPath, Bun.file(filePath));
+    }
   }
 
   if (removeAfterProcessing) {
@@ -191,7 +164,7 @@ export const processNewsletter = async (
   return {
     metadata: {
       issueDate: date,
-      issueNumber,
+      issueNumber
     },
     path: filePath,
     slug,
@@ -199,9 +172,25 @@ export const processNewsletter = async (
       date: dateText,
       description,
       editorial: editorialText,
-      issue: issueText,
-    },
+      issue: issueText
+    }
   };
+};
+
+const shouldWriteOutput = async (
+  outputPath: string,
+  skipExistingOutputs = false
+) => {
+  if (!skipExistingOutputs) {
+    return true;
+  }
+
+  try {
+    await access(outputPath);
+    return false;
+  } catch {
+    return true;
+  }
 };
 
 const issueTextToIssueNumber = (issueText: string) => {
@@ -237,12 +226,6 @@ const cropCanvas = (sourceCanvas: Canvas, cropRect: Rect): Canvas => {
   return croppedCanvas;
 };
 
-/**
- * Renders a single PDF page to an image buffer.
- *
- * @param {PDFPageProxy} page - The PDF.js page object.
- * @returns {Promise<Buffer>} The image as a buffer (JPEG format).
- */
 const renderPageToImage = async (page: PDFPageProxy, cropRect?: Rect) => {
   // Scale the page to 2x for a higher quality image output
   const viewport = page.getViewport({ scale: 2.0 });
@@ -251,8 +234,9 @@ const renderPageToImage = async (page: PDFPageProxy, cropRect?: Rect) => {
 
   // Create a compatible render context
   const renderContext = {
+    canvas: canvas as unknown as HTMLCanvasElement,
     canvasContext: context as unknown as CanvasRenderingContext2D,
-    viewport,
+    viewport
   };
 
   try {
@@ -292,7 +276,7 @@ const getTextInRect = async (page: PDFPageProxy, rect: Rect) => {
       height: pixelHeight,
       width: pixelWidth,
       x: pixelX,
-      y: pixelY - pixelHeight,
+      y: pixelY - pixelHeight
     };
   };
 

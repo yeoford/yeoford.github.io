@@ -2,17 +2,15 @@
 import { ClientRouter } from 'astro:transitions';
 
 import BaseHead from '@components/layout/base-head.astro';
-import Footer from '@components/layout/footer.astro';
 import Header from '@components/layout/header.astro';
 import Tracker from '@components/layout/tracker.astro';
-import ThemeInit from '@components/theme/theme-init.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '@constants';
 import Countryside from '@images/countryside.jpg';
 ---
 
 <html lang="en">
   <head>
-    <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+    <BaseHead description={SITE_DESCRIPTION} title={SITE_TITLE} />
     <ClientRouter />
   </head>
   <body class="min-h-screen flex flex-col bg-emerald-500">
@@ -20,18 +18,18 @@ import Countryside from '@images/countryside.jpg';
       class="w-full aspect-[3/1] sm:aspect-[4/1] md:aspect-[5/2] lg:aspect-[16/5] relative max-h-[200px]"
       transition:name="header-image">
       <img
-        src={Countryside.src}
         alt="Countryside"
         class="w-full h-full object-cover object-center max-h-[200px]"
-        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 100vw"
-        loading="eager"
         decoding="async"
+        loading="eager"
+        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 100vw"
+        src={Countryside.src}
         transition:name="header-image-content"
       />
       <div class="absolute inset-0 flex flex-col items-center justify-center">
         <a
-          href="/"
           class="text-4xl md:text-4xl font-bold text-white"
+          href="/"
           transition:name="site-title"><h1>Yeoford Village</h1></a
         >
         <div class="hidden md:block w-full">

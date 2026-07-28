@@ -1,9 +1,17 @@
 /// <reference types="vitest" />
-import { getViteConfig } from 'astro/config';
+import { fileURLToPath } from 'node:url';
 
-export default getViteConfig({
-  test: {
-    /* for example, use global to avoid globals imports (describe, test, expect): */
-    // globals: true,
+import { defineConfig } from 'vitest/config';
+
+const helpersDirectory = fileURLToPath(
+  new URL('./src/helpers', import.meta.url)
+);
+
+export default defineConfig({
+  resolve: {
+    alias: {
+      '@helpers': helpersDirectory
+    }
   },
+  test: {}
 });
