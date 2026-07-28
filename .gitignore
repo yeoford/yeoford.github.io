@@ -25,6 +25,8 @@ pnpm-debug.log*
 
 # tool caches
 .eslintcache
+playwright-report/
+test-results/
 
 # generated Village Voice assets (tracked legacy files remain until issue #4)
 public/images/newsletters/

@@ -13,5 +13,7 @@ export default defineConfig({
       '@helpers': helpersDirectory
     }
   },
-  test: {}
+  test: {
+    include: ['src/**/*.test.ts']
+  }
 });
