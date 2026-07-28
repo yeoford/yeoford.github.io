@@ -7,21 +7,24 @@ import Layout from '@layouts/main.astro';
 
 <Layout>
   <div class="relative min-h-screen">
-    <div class="fixed inset-0 bg-black/50 z-10"></div>
+    <div class="fixed inset-0 z-10 bg-black/50"></div>
     <div
       class="fixed inset-0 bg-cover bg-center bg-no-repeat"
       style={`background-image: url(${Countryside.src});`}
-      transition:name="header-image-content">
+      transition:name="header-image-content"
+    >
     </div>
-    <div class="relative z-20 min-h-screen flex items-center justify-center">
+    <div class="relative z-20 flex min-h-screen items-center justify-center">
       <div
-        class="container mx-auto px-4 mt-8 flex flex-col items-center justify-center">
+        class="container mx-auto mt-8 flex flex-col items-center justify-center px-4"
+      >
         <h1
-          class="text-4xl md:text-5xl font-bold text-white mb-8"
-          transition:name="site-title">
+          class="mb-8 text-4xl font-bold text-white md:text-5xl"
+          transition:name="site-title"
+        >
           Yeoford Village
         </h1>
-        <div class="mb-8 md:mb-16 flex flex-wrap justify-center gap-4">
+        <div class="mb-8 flex flex-wrap justify-center gap-4 md:mb-16">
           <HeaderLink href="/the-village">The Village</HeaderLink>
           <HeaderLink href="/community-hall">Community Hall</HeaderLink>
           <HeaderLink href="/village-voice">Village Voice</HeaderLink>

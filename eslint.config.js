@@ -1,15 +1,25 @@
-import { resolve } from 'node:path';
-
 import astro from 'eslint-plugin-astro';
+import reactHooks from 'eslint-plugin-react-hooks';
+import tseslint from 'typescript-eslint';
 
-import nkzw from '@nkzw/eslint-config';
-
-export default [
+export default tseslint.config(
   {
-    ignores: ['**/dist/**', '.astro/**', 'src/components/ui/**']
+    ignores: [
+      '**/dist/**',
+      '.astro/**',
+      'playwright-report/**',
+      'test-results/**'
+    ]
   },
-  ...nkzw,
-  ...astro.configs['flat/recommended'],
+  ...tseslint.configs.recommended,
+  ...astro.configs.recommended,
+  {
+    files: ['**/*.{jsx,tsx}'],
+    plugins: {
+      'react-hooks': reactHooks
+    },
+    rules: reactHooks.configs.flat.recommended.rules
+  },
   {
     rules: {
       '@typescript-eslint/consistent-type-definitions': ['error', 'interface'],
@@ -17,25 +27,9 @@ export default [
       'arrow-parens': ['error', 'as-needed'],
       'arrow-spacing': ['error', { after: true, before: true }],
       'func-style': ['error', 'expression'],
-      'import-x/no-unresolved': ['error', { ignore: ['^astro:'] }],
       'no-var': 'error',
       'prefer-arrow-callback': 'error',
-      'prefer-const': 'error',
-      'react/no-unknown-property': 'off'
-    },
-    settings: {
-      'import/resolver': {
-        typescript: {
-          project: resolve(process.cwd(), './tsconfig.json')
-        }
-      }
-    }
-  },
-  {
-    files: ['**/*.astro'],
-    rules: {
-      'react/jsx-key': 'off',
-      'react/no-unescaped-entities': 'off'
+      'prefer-const': 'error'
     }
   },
   {
@@ -46,8 +40,7 @@ export default [
     ],
     rules: {
       'func-style': 'off',
-      'no-console': 'off',
-      'unicorn/prefer-top-level-await': 'off'
+      'no-console': 'off'
     }
   },
   {
@@ -56,4 +49,4 @@ export default [
       'react-hooks/set-state-in-effect': 'off'
     }
   }
-];
+);
