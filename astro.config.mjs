@@ -18,7 +18,7 @@ export default defineConfig({
 
   vite: {
     plugins: [
-      // @ts-expect-error Bun installs identical Vite types at two paths.
+      // @ts-ignore Bun may install identical Vite types at two paths.
       tailwindcss()
     ],
     resolve: {
