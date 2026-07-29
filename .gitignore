@@ -28,7 +28,7 @@ pnpm-debug.log*
 playwright-report/
 test-results/
 
-# generated Village Voice assets (tracked legacy files remain until issue #4)
+# generated Village Voice Derived Assets
 public/images/newsletters/
 public/pdf/
 src/content/newsletters/

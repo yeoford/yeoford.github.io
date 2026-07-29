@@ -1,32 +1,25 @@
 ---
 import { PdfViewer } from '@components/pdf-viewer';
-import { getPublishedNewsletters, sortEntriesByDate } from '@helpers/astro';
+import { getLatestIssue, getPublishedNewsletters } from '@helpers/astro';
+import { formatPublicationMonth } from '@helpers/newsletter/model';
 import Layout from '@layouts/page.astro';
 
-const newsletters = await getPublishedNewsletters();
-const sortedNewsletters = sortEntriesByDate(newsletters);
-
-const newsletter = sortedNewsletters[0];
+const newsletter = getLatestIssue(await getPublishedNewsletters());
 ---
 
 <Layout>
   <div class="container mx-auto px-4 py-8">
     <h1 class="mb-6 text-3xl font-bold">
       Village Voice {newsletter.data.issueNumber} -
-      {
-        newsletter.data.date.toLocaleString('en-GB', {
-          month: 'long',
-          year: 'numeric'
-        })
-      }
+      {formatPublicationMonth(newsletter.data.publicationMonth)}
     </h1>
     <div class="flex flex-col gap-4">
-      <PdfViewer client:only="react" path={newsletter.data.path} />
+      <PdfViewer client:only="react" path={newsletter.data.pdfPath} />
       <div class="mt-4 text-center">
         <a
           class="inline-flex items-center rounded-md bg-green-600 px-4 py-2 text-white transition-colors hover:bg-green-700"
           download
-          href={newsletter.data.path}
+          href={newsletter.data.pdfPath}
         >
           <svg
             class="mr-2 h-5 w-5"

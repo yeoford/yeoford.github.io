@@ -10,7 +10,6 @@
         "@hyzyla/pdfium": "2.1.13",
         "@tailwindcss/vite": "4.3.3",
         "astro": "7.1.4",
-        "github-slugger": "^2.0.0",
         "maplibre-gl": "6.0.0",
         "pdfjs-dist": "5.4.296",
         "react": "19.2.8",

@@ -1,1 +1,7 @@
-drop newsletter pdf's in here to process
+Canonical Village Voice Issue PDFs live here, and they are the only committed
+issue assets. Do not drop source PDFs in this directory — `newsletter:add`
+rejects a source inside the Archive.
+
+To publish an issue, point the command at a file outside this directory:
+
+    bun run newsletter:add -- ~/Downloads/village-voice.pdf

@@ -1,18 +1,25 @@
 import { getCollection } from 'astro:content';
 
-import type { Entry, EntryTypes, NewsletterEntry } from '@types';
+import type { Entry, NewsletterEntry } from '@types';
 
-const getEntries = async (collection: EntryTypes): Promise<Entry[]> => {
-  const entries: Entry[] = await getCollection(collection);
-  // return entries.map((entry) => {
-  //   entry.url = getEntryUrl(entry);
-  //   return entry;
-  // });
-  return entries;
+export const getPublishedNewsletters = async (): Promise<NewsletterEntry[]> =>
+  getCollection('newsletter');
+
+/** Newest Publication Month first, so the Latest Issue leads. */
+export const sortEntriesByNewestPublicationMonth = <T extends Entry>(
+  entries: T[]
+): T[] =>
+  entries.toSorted((a, b) =>
+    b.data.publicationMonth.localeCompare(a.data.publicationMonth)
+  );
+
+/** The Latest Issue: the Issue with the greatest Publication Month. */
+export const getLatestIssue = <T extends Entry>(entries: T[]): T => {
+  const [latest] = sortEntriesByNewestPublicationMonth(entries);
+
+  if (!latest) {
+    throw new Error('There are no published Issues');
+  }
+
+  return latest;
 };
-
-export const getPublishedNewsletters = async () =>
-  (await getEntries('newsletter')) as NewsletterEntry[];
-
-export const sortEntriesByDate = <T extends Entry>(entries: T[]): T[] =>
-  entries.toSorted((a, b) => b.data.date.valueOf() - a.data.date.valueOf());

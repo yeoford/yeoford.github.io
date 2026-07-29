@@ -8,15 +8,20 @@ A published edition of the Yeoford Village Voice, identified by its Issue
 number and Publication Month. Each Village Voice Issue has one canonical Issue
 PDF and may have multiple Derived Assets.
 
+### Issue ID
+
+The stable public identifier for a Village Voice Issue. It retains the legacy
+`newsletter-YEAR-ZERO_BASED_MONTH-ISSUE` format and identifies Archive routes
+and Derived Assets.
+
+_Avoid_: Slug
+
 ### Issue PDF
 
 The canonical PDF document for a Village Voice Issue. Issue PDFs are committed
 to the repository and are the source from which newsletter metadata, cover
-images, and public PDF copies are derived.
-
-Issue PDF optimization is part of the deterministic publishing work tracked in
-GitHub issue #4. Until that work is complete, an existing unoptimized Issue PDF
-remains canonical.
+images, and public PDF copies are derived. An Issue PDF is optimized without
+changing its published content or extractability.
 
 ### Publication Month
 
