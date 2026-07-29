@@ -1,10 +1,14 @@
 ---
 import Card from '@components/vv-card.astro';
-import { getPublishedNewsletters, sortEntriesByDate } from '@helpers/astro';
+import {
+  getPublishedNewsletters,
+  sortEntriesByNewestPublicationMonth
+} from '@helpers/astro';
+import { formatPublicationMonth } from '@helpers/newsletter/model';
 import Layout from '@layouts/page.astro';
 
 const newsletters = await getPublishedNewsletters();
-const sortedNewsletters = sortEntriesByDate(newsletters);
+const sortedNewsletters = sortEntriesByNewestPublicationMonth(newsletters);
 ---
 
 <Layout>
@@ -13,10 +17,10 @@ const sortedNewsletters = sortEntriesByDate(newsletters);
     {
       sortedNewsletters.map(newsletter => (
         <Card
-          description={newsletter.data.description ?? ''}
-          image={`/images/newsletters/${newsletter.data.slug}-cover.jpg`}
-          link={`/newsletter/${newsletter.data.slug}`}
-          title={`Village Voice - ${newsletter.data.date.toLocaleString('en-GB', { month: 'long', year: 'numeric' })}`}
+          description={newsletter.data.description}
+          image={newsletter.data.coverPath}
+          link={`/newsletter/${newsletter.data.id}`}
+          title={`Village Voice - ${formatPublicationMonth(newsletter.data.publicationMonth)}`}
         />
       ))
     }

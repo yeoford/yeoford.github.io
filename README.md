@@ -65,24 +65,29 @@ It runs, in order:
 3. Astro and TypeScript checks.
 4. Vitest in non-watch mode.
 5. Knip unused-code analysis.
-6. The production build.
-7. Playwright browser smoke tests against the built site at desktop and mobile
+6. Dependency security audit.
+7. Canonical Issue PDF validation.
+8. The production build, including Derived Asset generation.
+9. Playwright browser smoke tests against the built site at desktop and mobile
    viewports.
 
 Individual commands are also available:
 
-| Command                | Purpose                                                |
-| ---------------------- | ------------------------------------------------------ |
-| `bun run format`       | Format supported repository files                      |
-| `bun run format:check` | Check formatting without changing files                |
-| `bun run lint`         | Run ESLint                                             |
-| `bun run lint:fix`     | Apply safe ESLint fixes                                |
-| `bun run typecheck`    | Run Astro and TypeScript diagnostics                   |
-| `bun run test --run`   | Run unit tests once                                    |
-| `bun run unused`       | Find unused files, dependencies, and exports           |
-| `bun run build`        | Generate newsletter assets and build the site          |
-| `bun run test:e2e`     | Build and run the browser smoke suite                  |
-| `bun run test:e2e:run` | Run browser tests against an existing production build |
+| Command                       | Purpose                                                |
+| ----------------------------- | ------------------------------------------------------ |
+| `bun run format`              | Format supported repository files                      |
+| `bun run format:check`        | Check formatting without changing files                |
+| `bun run lint`                | Run ESLint                                             |
+| `bun run lint:fix`            | Apply safe ESLint fixes                                |
+| `bun run newsletter:add`      | Validate, optimize, and import one supplied Issue PDF  |
+| `bun run newsletter:check`    | Validate all canonical Issue PDFs without writing      |
+| `bun run newsletter:generate` | Rebuild all newsletter Derived Assets                  |
+| `bun run typecheck`           | Run Astro and TypeScript diagnostics                   |
+| `bun run test --run`          | Run unit tests once                                    |
+| `bun run unused`              | Find unused files, dependencies, and exports           |
+| `bun run build`               | Generate newsletter assets and build the site          |
+| `bun run test:e2e`            | Build and run the browser smoke suite                  |
+| `bun run test:e2e:run`        | Run browser tests against an existing production build |
 
 Running the complete gate must not create tracked cache or Derived Asset
 changes.
@@ -93,25 +98,26 @@ The current workflow is PDF-first. The committed Issue PDF is the source of
 truth; newsletter metadata, cover images, and public PDF copies are Derived
 Assets generated during builds.
 
-To publish an Issue with the current processor:
+Install [Ghostscript](https://www.ghostscript.com/) so that `gs` is available
+on your `PATH`. Ghostscript is required only when adding an Issue; validation,
+generation, development, and builds use the committed canonical PDFs directly.
 
-1. Add the supplied PDF to `newsletter/`, following the existing source-file
-   naming convention.
-2. Generate the Derived Assets:
+To publish an Issue:
+
+1. Keep the supplied PDF outside this repository's `newsletter/` directory.
+2. Import, validate, optimize, and consume it with:
 
    ```sh
-   bun run process-newsletters
+   bun run newsletter:add -- /path/to/source.pdf
    ```
 
 3. Run `bun run check`.
 4. Review the Latest Issue and Archive locally with `bun run preview`.
-5. Commit the Issue PDF and the intended source changes. New Derived Assets are
-   ignored because CI regenerates them before building.
+5. Commit the new canonical `newsletter/YYYY-MM-ISSUE.pdf`. Derived Assets are
+   ignored because development, CI, and production builds regenerate them.
 
-The current processor extracts data but does not fully validate or optimize a
-new Issue PDF. GitHub issue #4 owns the deterministic `newsletter:add`,
-`newsletter:generate`, and `newsletter:check` workflow, archive optimization,
-and removal of the remaining tracked legacy Derived Assets.
+`newsletter:add` does not overwrite duplicates. If extraction, optimization,
+revalidation, or source cleanup fails, it leaves the source unpublished.
 
 ## Deployment
 
