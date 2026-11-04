@@ -2,7 +2,10 @@
 import Layout from '@layouts/page.astro';
 ---
 
-<Layout>
+<Layout
+  description="Contact Yeoford about village groups, events, and facility bookings."
+  title="Contact | Yeoford"
+>
   <h1 class="mb-6 text-3xl font-bold">Contact</h1>
 
   <div class="mb-4">
@@ -64,7 +67,7 @@ import Layout from '@layouts/page.astro';
     </div>
 
     <button
-      class="rounded-md bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+      class="rounded-md bg-blue-700 px-4 py-2 text-white hover:bg-blue-800"
       type="submit"
     >
       Send
@@ -110,6 +113,7 @@ This email was pre-filled from the yeoford.org contact form.`;
 
         const mailtoLink = `mailto:admin.hall@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodedBody}`;
 
+        form.dataset.mailto = mailtoLink;
         window.location.href = mailtoLink;
       }
     });
