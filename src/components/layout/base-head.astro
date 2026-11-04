@@ -11,7 +11,8 @@ interface Props {
 
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 
-const { description, image = '/blog-placeholder-1.jpg', title } = Astro.props;
+const { description, image = '/favicon.svg', title } = Astro.props;
+const socialImageURL = new URL(image, Astro.site);
 ---
 
 <!-- Global Metadata -->
@@ -47,14 +48,14 @@ const { description, image = '/blog-placeholder-1.jpg', title } = Astro.props;
 
 <!-- Open Graph / Facebook -->
 <meta content="website" property="og:type" />
-<meta content={Astro.url} property="og:url" />
+<meta content={canonicalURL} property="og:url" />
 <meta content={title} property="og:title" />
 <meta content={description} property="og:description" />
-<meta content={new URL(image, Astro.url)} property="og:image" />
+<meta content={socialImageURL} property="og:image" />
 
 <!-- Twitter -->
-<meta content="summary_large_image" property="twitter:card" />
-<meta content={Astro.url} property="twitter:url" />
-<meta content={title} property="twitter:title" />
-<meta content={description} property="twitter:description" />
-<meta content={new URL(image, Astro.url)} property="twitter:image" />
+<meta content="summary_large_image" name="twitter:card" />
+<meta content={canonicalURL} name="twitter:url" />
+<meta content={title} name="twitter:title" />
+<meta content={description} name="twitter:description" />
+<meta content={socialImageURL} name="twitter:image" />

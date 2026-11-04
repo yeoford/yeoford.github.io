@@ -4,11 +4,24 @@ import { ClientRouter } from 'astro:transitions';
 import BaseHead from '@components/layout/base-head.astro';
 import Tracker from '@components/layout/tracker.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '@constants';
+import Countryside from '@images/countryside.jpg';
+
+interface Props {
+  description?: string;
+  image?: string;
+  title?: string;
+}
+
+const {
+  description = SITE_DESCRIPTION,
+  image = Countryside.src,
+  title = SITE_TITLE
+} = Astro.props;
 ---
 
 <html lang="en">
   <head>
-    <BaseHead description={SITE_DESCRIPTION} title={SITE_TITLE} />
+    <BaseHead description={description} image={image} title={title} />
     <ClientRouter />
   </head>
   <body class="flex min-h-screen flex-col bg-emerald-500">

@@ -11,7 +11,10 @@ const newsletters = await getPublishedNewsletters();
 const sortedNewsletters = sortEntriesByNewestPublicationMonth(newsletters);
 ---
 
-<Layout>
+<Layout
+  description="Browse the complete archive of published Yeoford Village Voice issues."
+  title="Village Voice Archive | Yeoford"
+>
   <h1 class="mb-6 text-3xl font-bold">Village Voice</h1>
   <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
     {

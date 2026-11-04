@@ -5,9 +5,12 @@ import Countryside from '@images/countryside.jpg';
 import Layout from '@layouts/main.astro';
 ---
 
-<Layout>
+<Layout
+  description="Yeoford is a small village in Mid-Devon, England."
+  title="Yeoford Village"
+>
   <div class="relative min-h-screen">
-    <div class="fixed inset-0 z-10 bg-black/50"></div>
+    <div class="fixed inset-0 z-10 bg-black/60"></div>
     <div
       class="fixed inset-0 bg-cover bg-center bg-no-repeat"
       style={`background-image: url(${Countryside.src});`}

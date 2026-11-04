@@ -1,6 +1,7 @@
 ---
 import { PdfViewer } from '@components/pdf-viewer';
 import { getPublishedNewsletters } from '@helpers/astro';
+import { formatPublicationMonth } from '@helpers/newsletter/model';
 import Layout from '@layouts/page.astro';
 
 export const getStaticPaths = async () => {
@@ -13,15 +14,45 @@ export const getStaticPaths = async () => {
 };
 
 const newsletter = Astro.props;
+const publicationMonth = formatPublicationMonth(
+  newsletter.data.publicationMonth
+);
 ---
 
-<Layout>
+<Layout
+  description={newsletter.data.description}
+  image={newsletter.data.coverPath}
+  title={`Village Voice ${newsletter.data.issueNumber} — ${publicationMonth} | Yeoford`}
+>
   <div class="container mx-auto px-4 py-8">
     <h1 class="mb-6 text-3xl font-bold">
-      Village Voice {newsletter.data.issueNumber}
+      Village Voice {newsletter.data.issueNumber} - {publicationMonth}
     </h1>
-    <div class="flex h-screen flex-col gap-4">
+    <div class="flex flex-col gap-4">
       <PdfViewer client:only="react" path={newsletter.data.pdfPath} />
+      <div class="mt-4 text-center">
+        <a
+          class="inline-flex items-center rounded-md bg-green-700 px-4 py-2 text-white transition-colors hover:bg-green-800"
+          download
+          href={newsletter.data.pdfPath}
+        >
+          <svg
+            aria-hidden="true"
+            class="mr-2 h-5 w-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"></path>
+          </svg>
+          Download PDF
+        </a>
+      </div>
     </div>
   </div>
 </Layout>
