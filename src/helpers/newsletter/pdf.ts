@@ -22,8 +22,11 @@ const COVER_IMAGE_RECT: Rect = {
   y: 333
 };
 
-const DATE_RECT: Rect = {
-  height: 120,
+// The header's right column holds the Publication Month above the issue
+// number. Their vertical positions differ between the Publisher and PowerPoint
+// cover templates, so both are read from one region and told apart by content.
+const HEADER_RECT: Rect = {
+  height: 220,
   width: 373,
   x: 785,
   y: 97
@@ -36,19 +39,9 @@ const DESCRIPTION_RECT: Rect = {
   y: 1540
 };
 
-const ISSUE_RECT: Rect = {
-  height: 73,
-  width: 193,
-  x: 936,
-  y: 244
-};
+const FIRST_PAGE_RECTS = [COVER_IMAGE_RECT, HEADER_RECT, DESCRIPTION_RECT];
 
-const FIRST_PAGE_RECTS = [
-  COVER_IMAGE_RECT,
-  DATE_RECT,
-  DESCRIPTION_RECT,
-  ISSUE_RECT
-];
+const ISSUE_NUMBER_TEXT = /^(?:issue|no\.|#)/iu;
 
 const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
 
@@ -69,12 +62,16 @@ export const extractVillageVoiceIssue = async (
     try {
       const firstPage = await document.getPage(1);
       assertCompatibleFirstPage(firstPage);
-      const [publicationMonthText, description, issueNumberText] =
-        await Promise.all([
-          getTextInRect(firstPage, DATE_RECT),
-          getTextInRect(firstPage, DESCRIPTION_RECT),
-          getTextInRect(firstPage, ISSUE_RECT)
-        ]);
+      const [headerItems, description] = await Promise.all([
+        getTextItemsInRect(firstPage, HEADER_RECT),
+        getTextInRect(firstPage, DESCRIPTION_RECT)
+      ]);
+      const issueNumberText = headerItems
+        .filter(text => ISSUE_NUMBER_TEXT.test(text.trim()))
+        .join(' ');
+      const publicationMonthText = headerItems
+        .filter(text => !ISSUE_NUMBER_TEXT.test(text.trim()))
+        .join(' ');
 
       return {
         bytes,
@@ -164,7 +161,10 @@ const assertCompatibleFirstPage = (page: PDFPageProxy) => {
   }
 };
 
-const getTextInRect = async (page: PDFPageProxy, rect: Rect) => {
+const getTextInRect = async (page: PDFPageProxy, rect: Rect) =>
+  (await getTextItemsInRect(page, rect)).join(' ');
+
+const getTextItemsInRect = async (page: PDFPageProxy, rect: Rect) => {
   const textContent = await page.getTextContent();
   const viewport = page.getViewport({ scale: 2 });
 
@@ -187,7 +187,7 @@ const getTextInRect = async (page: PDFPageProxy, rect: Rect) => {
       return rectIntersects(itemRect, rect);
     })
     .map(item => ('str' in item ? item.str : ''))
-    .join(' ');
+    .filter(text => text.trim() !== '');
 };
 
 const rectIntersects = (first: Rect, second: Rect) =>
