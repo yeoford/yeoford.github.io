@@ -37,6 +37,7 @@
     "newsletter:generate": "bun scripts/newsletter.ts generate",
     "outdated": "bunx npm-check-updates --interactive --format group",
     "preview": "bunx --bun astro preview",
+    "smoke:deployment": "bun scripts/deployment-smoke.ts",
     "typecheck": "astro check",
     "unused": "knip",
     "test": "vitest",
