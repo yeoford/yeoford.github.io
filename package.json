@@ -42,7 +42,8 @@
     "unused": "knip",
     "test": "vitest",
     "test:e2e": "bun run build && bun run test:e2e:run",
-    "test:e2e:run": "playwright test"
+    "test:e2e:run": "playwright test",
+    "test:e2e:serve": "bun tests/e2e/static-server.ts"
   },
   "dependencies": {
     "@astrojs/react": "6.0.1",

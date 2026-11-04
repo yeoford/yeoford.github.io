@@ -29,7 +29,8 @@ export default defineConfig({
     trace: 'retain-on-failure'
   },
   webServer: {
-    command: 'bun run preview --host 127.0.0.1 --ignore-lock',
+    command: 'bun run test:e2e:serve',
+    stdout: 'pipe',
     reuseExistingServer: !process.env.CI,
     url: 'http://127.0.0.1:4321'
   }
